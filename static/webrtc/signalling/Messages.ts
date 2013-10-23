@@ -1,6 +1,6 @@
 ﻿/// <reference path="../references.ts" />
 
-module signalling {
+module webrtc {
 
     export interface IMessage {
 

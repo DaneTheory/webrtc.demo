@@ -2,25 +2,31 @@
 /// <reference path="Settings.ts" />
 /// <reference path="Messages.ts" />
 
-module peers {
+module webrtc {
 
     export class Peer {
 
-        public userid      : string;
-
         public connection  : RTCPeerConnection;
-
-        public settings    : peers.Settings;
 
         public channel     : RTCDataChannel;
 
+        public userid      : string;
+        
+        public settings    : webrtc.Settings;
+
         public onCandidate : (candidate:RTCIceCandidate) => void;
+
+        public onConnect   : (sender:webrtc.Peer) => void;
+
+        public onMessage   : (sender:webrtc.Peer, data:any) => void;
+
+        public connected   : boolean;
 
         constructor(userid: string) {
             
             this.userid     = userid;
 
-            this.settings   = new peers.Settings();
+            this.settings   = new webrtc.Settings();
 
             this.connection = new RTCPeerConnection(this.settings.configuration, this.settings.constraints);
 
@@ -34,11 +40,33 @@ module peers {
 
             this.channel    = this.connection.createDataChannel('channel', { reliable: false })
 
-            this.channel.onopen = function() {
+            this.channel.onopen = () => {
 
-                console.log("CHANNEL OPEN!")
+                this.connected = true;
+
+                if(this.onConnect) {
+                
+                    this.onConnect(this);
+                }
+            }
+
+            this.channel.onmessage = (message) => {
+            
+                if(this.onMessage) {
+
+                    this.onMessage(this, message)
+                }
+            }
+
+            this.channel.onclose = () => {
+            
+                this.connected = false;
             }
         }
+
+        //----------------------------------------------
+        // signalling methods
+        //----------------------------------------------
 
         public createOffer (callback:(offer:RTCSessionDescription) => void) : void {
             
@@ -73,6 +101,18 @@ module peers {
         public acceptCandidate(candidate:RTCIceCandidate) : void {
 
             this.connection.addIceCandidate(candidate);
+        }
+
+        //----------------------------------------------
+        // io methods
+        //----------------------------------------------
+
+        public send(data:any) : void {
+            
+            if(this.connected) {
+            
+                this.channel.send(data)
+            }
         }
     }
 }

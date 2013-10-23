@@ -2,29 +2,29 @@
 /// <reference path="Messages.ts" />
 /// <reference path="ISignaller.ts" />
 
-module signalling {
+module webrtc {
 
     /*
     * socket.io signaller implementation.
     */
-    export class SocketIOSignaller implements signalling.ISignaller {
+    export class SocketIOSignaller implements webrtc.ISignaller {
 
-        public onIdentity  : (identity: signalling.IIdentityMessage) => void;
+        public onIdentity  : (identity  : webrtc.IIdentityMessage) => void;
 
-        public onOffer     : (offer: signalling.IOfferMessage) => void;
+        public onOffer     : (offer     : webrtc.IOfferMessage) => void;
 
-        public onAnswer    : (answer: signalling.IAnswerMessage) => void;
+        public onAnswer    : (answer    : webrtc.IAnswerMessage) => void;
 
-        public onCandidate : (candidate: signalling.ICandidateMessage) => void;
+        public onCandidate : (candidate : webrtc.ICandidateMessage) => void;
 
-        public onSync      : (data: any) => void;
+        public onSync      : (data : any) => void;
 
         constructor(public socket: Socket) {
 
             //------------------------------------
             // events
             //------------------------------------
-            this.socket.on('identity',(identity: signalling.IIdentityMessage) => {
+            this.socket.on('identity', (identity: webrtc.IIdentityMessage) => {
 
                 if(this.onIdentity) {
 
@@ -32,7 +32,7 @@ module signalling {
                 }
             })
 
-            this.socket.on('offer',(message: signalling.IOfferMessage) => {
+            this.socket.on('offer', (message: webrtc.IOfferMessage) => {
 
                 if(this.onOffer) {
 
@@ -42,7 +42,7 @@ module signalling {
                 }
             })
 
-            this.socket.on('answer',(message: signalling.IAnswerMessage) => {
+            this.socket.on('answer', (message: webrtc.IAnswerMessage) => {
 
                 if(this.onAnswer) {
 
@@ -52,7 +52,7 @@ module signalling {
                 }
             })
 
-            this.socket.on('candidate',(message: signalling.ICandidateMessage) => {
+            this.socket.on('candidate', (message: webrtc.ICandidateMessage) => {
 
                 if(this.onCandidate) {
 
@@ -74,26 +74,26 @@ module signalling {
         //------------------------------------
         // methods
         //------------------------------------
-        public sendIdentity(message: signalling.IIdentityMessage): void {
+        public sendIdentity(message: webrtc.IIdentityMessage): void {
             
             this.socket.emit('identity', message)
         }
 
-        public sendOffer(message: signalling.IOfferMessage): void {
+        public sendOffer(message: webrtc.IOfferMessage): void {
 
             message.offer = JSON.stringify(message.offer);
 
             this.socket.emit('offer', message)
         }
 
-        public sendAnswer(message: signalling.IAnswerMessage): void {
+        public sendAnswer(message: webrtc.IAnswerMessage): void {
 
             message.answer = JSON.stringify(message.answer);
 
             this.socket.emit('answer', message)
         }
 
-        public sendCandidate(message: signalling.ICandidateMessage): void {
+        public sendCandidate(message: webrtc.ICandidateMessage): void {
 
             message.candidate = JSON.stringify(message.candidate);
 

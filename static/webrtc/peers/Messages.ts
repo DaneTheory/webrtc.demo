@@ -1,4 +1,4 @@
-﻿module peers {
+﻿module webrtc {
 
     
 

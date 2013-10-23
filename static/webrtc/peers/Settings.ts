@@ -1,6 +1,6 @@
 ﻿/// <reference path="../references.ts" />
 
-module peers {
+module webrtc {
 
     export class Settings {
 

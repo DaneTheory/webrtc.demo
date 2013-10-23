@@ -38,6 +38,11 @@ io.sockets.on('connection', function (socket) {
     socket.on('identity', function(data) {
 
         socket.set('userid', data.userid)
+
+        util.userids(io, function(userids) {
+
+            io.sockets.emit('sync', userids)
+        })
     })
 
     socket.on('candidate', function(data) {
@@ -68,10 +73,6 @@ io.sockets.on('connection', function (socket) {
     })
 })
 
-// ---------------------------------------------------
-// intervals
-// ---------------------------------------------------
-
 setInterval(function() {
 
     util.userids(io, function(userids) {
@@ -79,7 +80,7 @@ setInterval(function() {
         io.sockets.emit('sync', userids)
     })
 
-}, 1000);
+}, 2000);
 
 // ---------------------------------------------------
 // listen

@@ -1,29 +1,29 @@
 ﻿/// <reference path="../references.ts" />
 /// <reference path="Messages.ts" />
 
-module signalling {
+module webrtc {
 
     /*
     * implementation for a signaller.
     */
     export interface ISignaller {
 
-        onIdentity   : (message   : signalling.IIdentityMessage) => void;
+        onIdentity   : (message   : webrtc.IIdentityMessage) => void;
 
-        onOffer      : (message   : signalling.IOfferMessage) => void;
+        onOffer      : (message   : webrtc.IOfferMessage) => void;
 
-        onAnswer     : (message   : signalling.IAnswerMessage) => void;
+        onAnswer     : (message   : webrtc.IAnswerMessage) => void;
 
-        onCandidate  : (message   : signalling.ICandidateMessage) => void;
+        onCandidate  : (message   : webrtc.ICandidateMessage) => void;
 
         onSync       : (data      : any) => void;
 
-        sendIdentity   (message   : signalling.IIdentityMessage) : void;
+        sendIdentity   (message   : webrtc.IIdentityMessage) : void;
 
-        sendOffer      (message   : signalling.IOfferMessage) : void;
+        sendOffer      (message   : webrtc.IOfferMessage) : void;
 
-        sendAnswer     (message   : signalling.IAnswerMessage) : void;
+        sendAnswer     (message   : webrtc.IAnswerMessage) : void;
 
-        sendCandidate  (message   : signalling.ICandidateMessage) : void;
+        sendCandidate  (message   : webrtc.ICandidateMessage) : void;
     }
 }

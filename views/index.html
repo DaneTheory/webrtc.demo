@@ -12,65 +12,71 @@
 
         <script type="text/javascript">
 
-            var socket  = null;
+            var socket     = null;
 
-            var session = null;
+            var logger     = null;
 
-            function update_usernames() {
-            
-                var usernames = session.state.usernames;
+            var signaller  = null;
 
-                var quote = String.fromCharCode(39)
+            var client     = null;
 
-                var buffer = [];
-
-                for (var n in usernames) {
-
+            function onServerSync(data) {
+                var userids = data;
+                var quote   = String.fromCharCode(39)
+                var buffer  = [];
+                for (var n in userids) {
                     buffer.push('<li>')
-
-                    buffer.push('<a href="javascript:call(')
-
+                    buffer.push('<a href="javascript:connect(')
                     buffer.push(quote)
-
-                    buffer.push(usernames[n])
-
+                    buffer.push(userids[n])
                     buffer.push(quote)
-
                     buffer.push(')">')
-
-                    buffer.push(usernames[n])
-
+                    buffer.push(userids[n])
                     buffer.push('</a>')
-
                     buffer.push('</li>')
                 }
-
-                $('#usernames').html(buffer.join(''))
+                $('#userids').html(buffer.join(''))
             }
 
-            function call(username) {
+            function userid() {
 
-                session.call(username);
+                return $('#userid').val()
             }
 
+            function connect(userid) {
+
+                client.connect(userid);
+            }
+            
             function login() {
 
-                var username = $('#username').val();
+                socket    = io.connect();
 
-                socket = io.connect();
+                signaller = new webrtc.SocketIOSignaller(socket);
 
-                socket.on('connect', function() {
+                logger    = new webrtc.ConsoleLogger();
+
+                client    = new webrtc.Client(userid(), signaller, logger);
+
+                client.onConnect = function(peer) {
                     
-                    var logger = new ConsoleLogger();
+                    peer.send("hello")
+                }
 
-                    session = new Session(socket, logger, username);
+                client.onMessage = function(peer, message) {
+                    
+                    console.log('onMessage')
 
-                    session.state.onchange = update_usernames;
+                    peer.send("reply")
+                }
 
-                    $('#container-session').show();
-            
-                })
+                client.onServerSync = onServerSync;
+
+                $('#container-session').show();
             }
+
+
+   
 
         </script>
 
@@ -80,7 +86,7 @@
 
         <div id="container-login">
 
-            <input type="text" id="username" />
+            <input type="text" id="userid" />
 
             <input type="button" id="login" value="login" onclick="login()" />
 
@@ -98,7 +104,7 @@
 
             <div>
 
-                <ul id="usernames"></ul>
+                <ul id="userids"></ul>
 
             </div>
 
