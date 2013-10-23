@@ -161,7 +161,7 @@ module demo
             // desc scale
             for(var i = 0; i < this.players.length; i++) {
                 var player = this.players[i];
-                player.scale -= 0.01;
+                player.scale -= 0.03;
                 player.cube.scale.x = player.scale;
                 player.cube.scale.y = player.scale;
                 player.cube.scale.z = player.scale;                
@@ -196,7 +196,7 @@ module demo
                     var offsety = bullet.z - player.z;
                     var dist    = Math.sqrt((offsetx * offsetx) + (offsety * offsety));
                     if(dist < 1.5) {
-                        player.scale += 0.03;
+                        player.scale += 0.05;
                         if(player.scale > 2.0) {
                             player.scale = 2.0;
                         }
