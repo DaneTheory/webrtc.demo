@@ -87,7 +87,7 @@ module demo
 
         private setupCamera (width: number, height: number): void {
 
-            this.camera = new THREE.PerspectiveCamera(60, width / height, 1, 12000);
+            this.camera = new THREE.PerspectiveCamera(60, width / height, 1, 1000);
             
             this.camera.position = new THREE.Vector3(0, 20, -20);
             
@@ -110,7 +110,7 @@ module demo
                 new THREE.MeshBasicMaterial( { color: 0x000000, wireframe: true, transparent: true, opacity: 0.5, side: THREE.DoubleSide } )
             ];
             
-            this.plane = THREE.SceneUtils.createMultiMaterialObject( new THREE.PlaneGeometry( 200, 200, 64, 64 ), materials );
+            this.plane = THREE.SceneUtils.createMultiMaterialObject( new THREE.PlaneGeometry( 200, 200, 16, 16 ), materials );
 
             this.plane.rotation.x = 90 * Math.PI / 180.0;
 
@@ -141,7 +141,7 @@ module demo
                 new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true, transparent: true, opacity: 0.5, side: THREE.DoubleSide } )
             ];
             
-            player.cube = THREE.SceneUtils.createMultiMaterialObject( new THREE.CubeGeometry( 3, 3, 3, 4, 4, 4 ), materials );
+            player.cube = THREE.SceneUtils.createMultiMaterialObject( new THREE.CubeGeometry( 3, 3, 3, 1, 1, 1 ), materials );
 
             this.scene.add(player.cube);
 
@@ -233,8 +233,6 @@ module demo
             this.scene.add(bullet.cube);
 
             this.bullets.push(bullet);
-
-
         }
 
         public update() : void {
@@ -260,8 +258,7 @@ module demo
                     this.scene.remove(this.bullets[i].cube);
 
                     this.bullets = this.bullets.splice(i, 1);
-                }
-                             
+                }           
             }
         }
 

@@ -32,8 +32,13 @@
 
                 client.connect(userid);
             }
-            
+
+            //----------------------------
+            // login proc
+            //----------------------------            
             function login() {
+
+                setup_elements();
 
                 setup_graphics();
 
@@ -42,18 +47,34 @@
                 setup_player();
             }
 
+            //----------------------------
+            // swap out after login
+            //----------------------------
+            function setup_elements() {
+
+                $('#container-login').hide();
+
+                $('#container-demo').show();
+            }
+
+            //----------------------------
+            // initialize the network
+            //----------------------------
             function setup_network() {
 
                 socket    = io.connect();
 
                 signaller = new webrtc.SocketIOSignaller(socket);
 
-                logger    = new webrtc.NullLogger();
+                logger    = new webrtc.ConsoleLogger();
 
                 client    = new webrtc.Client($('#userid').val(), signaller, logger);
 
                 client.onServerSync = function(userids) {
 
+                    //-------------------------------
+                    // pair up incoming connections
+                    //-------------------------------
                     for(var i = 0; i < userids.length; i++) {
 
                         if(userids[i] != client.userid) {
@@ -68,6 +89,9 @@
                     }
                 }
 
+                //-------------------------------
+                // on connect, create player entity
+                //-------------------------------
                 client.onConnect = function(peer) {
                     
                     var player = app.getPlayer(peer.userid);
@@ -78,6 +102,9 @@
                     }
                 }
 
+                //-------------------------------
+                // on message, update state.
+                //-------------------------------
                 client.onMessage = function(peer, message) {
 
                     var update = JSON.parse(message.data);
@@ -89,6 +116,9 @@
                 }
             }
 
+            //----------------------------
+            // sets up the player
+            //----------------------------
             function setup_player() {
 
                 player = app.createPlayer(client.userid);
@@ -102,9 +132,12 @@
                 }, 2000);
             }
 
+            //----------------------------
+            // sets up the graphics
+            //----------------------------
             function setup_graphics() {
 
-                app = new demo.App( document.getElementById('app'), 800, 800 );
+                app = new demo.App( document.getElementById('app'), 800, 600 );
                 
                 var render = function() {
 
@@ -118,6 +151,9 @@
                 render();
             }
 
+            //----------------------------
+            // updates player and broadcasts
+            //----------------------------
             function update_player_data() {
 
                 client.broadcast(JSON.stringify({
@@ -140,6 +176,10 @@
                 app.lookAtPlayer(player.userid);                
             }
 
+
+            //-----------------------------------
+            // rough as guts keyboard handler.
+            //-----------------------------------
             document.onkeydown = checkKey;
 
             function checkKey(e) {
@@ -207,11 +247,16 @@
 
             <input type="text" id="userid" />
 
-            <input type="button" id="login" value="login" onclick="login()" />
+            <input type="button" id="login" value="username" onclick="login()" />
 
         </div>
 
-        <div id="app"></div>
+        <div id="container-demo" style="display:none">
+
+            <div id="app"></div>
+
+            <p>use arrow keys to move, (s) to shoot.</p>
+        </div>
 
     </body>
 

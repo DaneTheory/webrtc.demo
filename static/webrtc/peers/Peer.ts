@@ -75,7 +75,8 @@ module webrtc {
                 this.connection.setLocalDescription(offer);
 
                 callback(offer);
-            });
+
+            }, this.errorHandler, this.settings.constraints);
         }
 
         public createAnswer(callback: (answer:RTCSessionDescription) => void) : void {
@@ -85,7 +86,9 @@ module webrtc {
                  this.connection.setLocalDescription(answer);
 
                 callback(answer);
-            })
+
+                
+            }, this.errorHandler, this.settings.constraints )
         }
 
         public acceptOffer(offer: RTCSessionDescription) : void {
@@ -113,6 +116,11 @@ module webrtc {
 
                 this.channel.send(data)
             }
+        }
+
+        private errorHandler(error:string) : void {
+        
+            
         }
     }
 }

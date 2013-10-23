@@ -3,6 +3,7 @@
 export interface ICompilerContext extends appex.web.IContext {
 
     webrtc_compiler : appex.compiler.Compiler;
+
     demo_compiler   : appex.compiler.Compiler;
 }
 
