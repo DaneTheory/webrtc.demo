@@ -21,11 +21,16 @@ var logging = false;
 // appex
 // ---------------------------------------------------
 
-var app = appex({ program: './app.ts', 
+var app = appex({ program: './app.ts',
+
                   devmode: true, 
+
                   logging: logging, 
+
                   context: { 
+
                         webrtc_compiler : new appex.compiler.Compiler(),
+
                         demo_compiler   : new appex.compiler.Compiler() 
                    }
                 });
