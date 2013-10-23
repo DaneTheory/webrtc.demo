@@ -10,7 +10,15 @@
 
         <script type="text/javascript" src="/static/webrtc/client.js"></script>
 
+        <script type="text/javascript" src="/static/threejs/three.min.js"></script>
+
+        <script type="text/javascript" src="/static/demo/demo.js"></script>
+
         <script type="text/javascript">
+
+            var app        = null;
+
+            var player     = null;
 
             var socket     = null;
 
@@ -20,29 +28,6 @@
 
             var client     = null;
 
-            function onServerSync(data) {
-                var userids = data;
-                var quote   = String.fromCharCode(39)
-                var buffer  = [];
-                for (var n in userids) {
-                    buffer.push('<li>')
-                    buffer.push('<a href="javascript:connect(')
-                    buffer.push(quote)
-                    buffer.push(userids[n])
-                    buffer.push(quote)
-                    buffer.push(')">')
-                    buffer.push(userids[n])
-                    buffer.push('</a>')
-                    buffer.push('</li>')
-                }
-                $('#userids').html(buffer.join(''))
-            }
-
-            function userid() {
-
-                return $('#userid').val()
-            }
-
             function connect(userid) {
 
                 client.connect(userid);
@@ -50,34 +35,160 @@
             
             function login() {
 
+                setup_graphics();
+
+                setup_network();
+
+                setup_player();
+            }
+
+            function setup_network() {
+
                 socket    = io.connect();
 
                 signaller = new webrtc.SocketIOSignaller(socket);
 
-                logger    = new webrtc.ConsoleLogger();
+                logger    = new webrtc.NullLogger();
 
-                client    = new webrtc.Client(userid(), signaller, logger);
+                client    = new webrtc.Client($('#userid').val(), signaller, logger);
+
+                client.onServerSync = function(userids) {
+
+                    for(var i = 0; i < userids.length; i++) {
+
+                        if(userids[i] != client.userid) {
+
+                            var peer = client.getPeer(userids[i])
+
+                            if(!peer) {
+
+                                client.connect(userids[i]);
+                            }
+                        }
+                    }
+                }
 
                 client.onConnect = function(peer) {
                     
-                    peer.send("hello")
+                    var player = app.getPlayer(peer.userid);
+
+                    if(!player) {
+
+                        app.createPlayer(peer.userid);
+                    }
                 }
 
                 client.onMessage = function(peer, message) {
-                    
-                    console.log('onMessage')
 
-                    peer.send("reply")
+                    var update = JSON.parse(message.data);
+
+                    if(update.type == 'updatePlayer') {
+
+                        app.updatePlayer(peer.userid, update.x, update.y, update.z, update.angle);
+                    }
                 }
-
-                client.onServerSync = onServerSync;
-
-                $('#container-session').show();
             }
 
+            function setup_player() {
 
-   
+                player = app.createPlayer(client.userid);
 
+                update_player_data();
+
+                setInterval(function() {
+
+                    update_player_data();
+
+                }, 2000);
+            }
+
+            function setup_graphics() {
+
+                app = new demo.App( document.getElementById('app'), 800, 800 );
+                
+                var render = function() {
+
+                    requestAnimationFrame( render );
+
+                    app.render();
+                }
+
+                render();
+            }
+
+            function update_player_data() {
+
+                app.updatePlayer(player.userid, player.x, player.y, player.z, player.angle);
+                    
+                app.lookAtPlayer(player.userid);
+                    
+                client.broadcast(JSON.stringify({
+                    type     : 'updatePlayer',
+
+                    x        : player.x,
+
+                    y        : player.y,
+
+                    z        : player.z,
+
+                    angle    : player.angle
+                }));
+
+                
+
+            }
+
+            document.onkeydown = checkKey;
+
+            function checkKey(e) {
+
+                if(player) {
+
+                    e = e || window.event;
+
+                    switch(e.keyCode) {
+
+                        case 37: 
+                            
+                            player.angle += 5;
+                            
+                            break; // left
+
+                        case 39: 
+                            
+                            player.angle -= 5;
+                            
+                            break; // right
+
+                        case 38: 
+
+                            var x = Math.sin(player.angle * 3.14 / 180);
+
+                            var y = Math.cos(player.angle * 3.14 / 180);
+                            
+                            player.x += x; 
+
+                            player.z += y;                             
+                            
+                            break; // up
+
+                        case 40: 
+
+                            var x = Math.sin(player.angle * 3.14 / 180);
+
+                            var y = Math.cos(player.angle * 3.14 / 180);
+                            
+                            player.x -= x; 
+
+                            player.z -= y;                             
+                            
+                            break; // up
+                    }
+
+                    update_player_data();
+                     
+                }
+            }
         </script>
 
     </head>
@@ -92,23 +203,7 @@
 
         </div>
 
-        <div id="container-session" style="display: none">
-
-            <div>
-
-                <input type="button" value="call" onclick="call" />
-
-                <input type="button" value="answer" onclick="answer" />
-
-            </div>
-
-            <div>
-
-                <ul id="userids"></ul>
-
-            </div>
-
-        </div>
+        <div id="app"></div>
 
     </body>
 

@@ -1,9 +1,9 @@
 ﻿/// <reference path="references.ts" />
 
 /// <reference path="logging/ILogger.ts" />
+/// <reference path="logging/NullLogger.ts" />
 /// <reference path="logging/TextAreaLogger.ts" />
 /// <reference path="logging/ConsoleLogger.ts" />
-
 
 /// <reference path="signalling/Messages.ts" />
 /// <reference path="signalling/ISignaller.ts" />

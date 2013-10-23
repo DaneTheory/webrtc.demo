@@ -110,7 +110,7 @@ module webrtc {
         public send(data:any) : void {
             
             if(this.connected) {
-            
+
                 this.channel.send(data)
             }
         }

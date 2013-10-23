@@ -215,6 +215,23 @@ module webrtc {
                  this.peers[i].send(data)
             }    
         }
+
+        //----------------------------------------------
+        // peer methods
+        //----------------------------------------------
+
+        public getPeer(userid:string) : webrtc.Peer {
+        
+            for(var i = 0; i < this.peers.length; i++) {
+            
+                if(this.peers[i].userid == userid) {
+                
+                    return this.peers[i];
+                }
+            }
+
+            return null;
+        }
     }
 }
 

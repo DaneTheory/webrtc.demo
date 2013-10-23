@@ -2,15 +2,19 @@
 
 export interface ICompilerContext extends appex.web.IContext {
 
-    compiler : appex.compiler.Compiler
+    webrtc_compiler : appex.compiler.Compiler;
+    demo_compiler   : appex.compiler.Compiler;
 }
 
+//----------------------------------------------------------
+// webrtc code
+//----------------------------------------------------------
 export module static.webrtc {
 
     attribute('static.webrtc.client', {urls: ['/static/webrtc/client.js']})
     export function client(context: ICompilerContext) {
         
-        context.compiler.compile('./static/webrtc/index.ts', (result) => {
+        context.webrtc_compiler.compile('./static/webrtc/index.ts', (result) => {
                
             if(result.diagnostics.length > 0) {
                   
@@ -18,13 +22,36 @@ export module static.webrtc {
 
                 return;
             }
-            console.log()
 
             context.response.headers['Content-Type'] = 'text/javascript';
 
             context.response.send(result.javascript)
         })
-    }    
+    }
+}
+
+//----------------------------------------------------------
+// demo code
+//----------------------------------------------------------
+export module static.pantha {
+
+    attribute('static.pantha.client', {urls: ['/static/demo/demo.js']})
+    export function client(context: ICompilerContext) {
+        
+        context.demo_compiler.compile('./static/demo/index.ts', (result) => {
+               
+            if(result.diagnostics.length > 0) {
+                  
+                context.response.json(500, result.diagnostics)
+
+                return;
+            }
+
+            context.response.headers['Content-Type'] = 'text/javascript';
+
+            context.response.send(result.javascript)
+        })
+    }
 }
 
 export module static {
