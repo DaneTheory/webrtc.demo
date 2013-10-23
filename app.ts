@@ -10,7 +10,7 @@ export module static.webrtc {
     attribute('static.webrtc.client', {urls: ['/static/webrtc/client.js']})
     export function client(context: ICompilerContext) {
         
-        context.compiler.compile('./static/webrtc/client.ts', (result) => {
+        context.compiler.compile('./static/webrtc/client2.ts', (result) => {
                
             if(result.diagnostics.length > 0) {
                   
@@ -36,7 +36,7 @@ export module static {
 
 export function index(context:appex.web.IContext) {
 
-    context.response.html(context.template.render('./views/index.html')) 
+    context.response.html(context.template.render('./views/index2.html')) 
 }
 
 export function test(context:appex.web.IContext) {

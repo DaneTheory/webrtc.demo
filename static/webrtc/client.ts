@@ -3,7 +3,6 @@
 /// <reference path="settings.ts" />
 /// <reference path="state.ts" />
 
-
 class Session {
 
     private connection : RTCPeerConnection;
@@ -52,7 +51,7 @@ class Session {
 
         this.logger.log('on_identity');
 
-        this.socket.emit('identity',this.username);
+        this.socket.emit('identity', this.username);
     }
 
     private on_candidate(data: any): void {

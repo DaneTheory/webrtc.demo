@@ -35,14 +35,12 @@ io.sockets.on('connection', function (socket) {
     
     socket.emit('identity')
 
-    socket.on('identity', function(username) {
+    socket.on('identity', function(data) {
 
-        socket.set('username', username)
+        socket.set('userid', data.userid)
     })
 
     socket.on('candidate', function(data) {
-
-        console.log('candidate: "' + data.from + '" -> "' + data.to + '"')
 
         util.get_socket(io, data.to, function(other) {
             
@@ -52,8 +50,6 @@ io.sockets.on('connection', function (socket) {
 
     socket.on('offer', function (data) {
 
-        console.log('offer: "' + data.from + '" -> "' + data.to + '"')
-
         util.get_socket(io, data.to, function(other) {
             
             other.emit('offer', data)
@@ -61,8 +57,6 @@ io.sockets.on('connection', function (socket) {
     })
 
     socket.on('answer', function (data) {
-
-        console.log('answer: "' + data.from + '" -> "' + data.to + '"')
 
         util.get_socket(io, data.to, function(other) {
 
@@ -80,9 +74,9 @@ io.sockets.on('connection', function (socket) {
 
 setInterval(function() {
 
-    util.usernames(io, function(usernames) {
+    util.userids(io, function(userids) {
 
-        io.sockets.emit('usernames', usernames)
+        io.sockets.emit('sync', userids)
     })
 
 }, 1000);

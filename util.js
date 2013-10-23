@@ -1,39 +1,39 @@
 ﻿var async = require('async')
 
 //---------------------------------------------------------
-// gets all usernames
+// gets all userids
 //---------------------------------------------------------
 
-module.exports.usernames = function (io, callback) {
+module.exports.userids = function (io, callback) {
 
     var clients = io.sockets.clients();
 
     async.map(clients, function (client, callback) {
 
-        client.get('username', function (err, username) {
+        client.get('userid', function (err, userid) {
 
-            callback(null, username);
+            callback(null, userid);
         })
 
-    }, function (err, usernames) {
+    }, function (err, userids) {
 
-        callback(usernames)
+        callback(userids)
     })
 }
 
 //---------------------------------------------------------
-// gets a socket by the username
+// gets a socket by the userid
 //---------------------------------------------------------
 
-module.exports.get_socket = function(io, username, callback) {
+module.exports.get_socket = function(io, userid, callback) {
 
     var clients = io.sockets.clients();
 
     async.filter(clients, function(client, callback) {
 
-        client.get('username', function(err, _username) {
+        client.get('userid', function(err, _userid) {
 
-            if (_username == username) {
+            if (_userid == userid) {
 
                 callback(true)
 
