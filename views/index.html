@@ -4,13 +4,13 @@
 
         <script type="text/javascript" src="/static/jquery/jquery.js"></script>
 
+        <script type="text/javascript" src="/static/threejs/three.min.js"></script>
+
         <script type="text/javascript" src="/socket.io/socket.io.js"></script>
 
         <script type="text/javascript" src="/static/webrtc/shim/adapter.js"></script>
 
         <script type="text/javascript" src="/static/webrtc/client.js"></script>
-
-        <script type="text/javascript" src="/static/threejs/three.min.js"></script>
 
         <script type="text/javascript" src="/static/demo/demo.js"></script>
 
@@ -83,8 +83,8 @@
                     var update = JSON.parse(message.data);
 
                     if(update.type == 'updatePlayer') {
-
-                        app.updatePlayer(peer.userid, update.x, update.y, update.z, update.angle);
+                        
+                        app.updatePlayer(peer.userid, update.x, update.y, update.z, update.angle, update.fire);
                     }
                 }
             }
@@ -110,6 +110,8 @@
 
                     requestAnimationFrame( render );
 
+                    app.update();
+
                     app.render();
                 }
 
@@ -118,11 +120,8 @@
 
             function update_player_data() {
 
-                app.updatePlayer(player.userid, player.x, player.y, player.z, player.angle);
-                    
-                app.lookAtPlayer(player.userid);
-                    
                 client.broadcast(JSON.stringify({
+
                     type     : 'updatePlayer',
 
                     x        : player.x,
@@ -131,11 +130,14 @@
 
                     z        : player.z,
 
+                    fire     : player.fire,
+
                     angle    : player.angle
                 }));
 
-                
-
+                app.updatePlayer(player.userid, player.x, player.y, player.z, player.angle, player.fire);
+                    
+                app.lookAtPlayer(player.userid);                
             }
 
             document.onkeydown = checkKey;
@@ -183,6 +185,12 @@
                             player.z -= y;                             
                             
                             break; // up
+
+                        case 83:
+
+                            player.fire = 1;
+
+                            break;
                     }
 
                     update_player_data();

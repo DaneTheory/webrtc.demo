@@ -13,8 +13,25 @@ module demo
         public z        : number;
 
         public angle    : number;
+
+        public fire     : number;
         
         public cube     : THREE.Object3D;
+    }
+
+    export class Bullet {
+    
+        public x        : number;
+
+        public y        : number;
+
+        public z        : number;
+        
+        public angle    : number; 
+        
+        public cube     : THREE.Object3D; 
+        
+        public ticks    : number;             
     }
 
     export class App
@@ -28,6 +45,8 @@ module demo
         public scene    : THREE.Scene;
         
         public players  : demo.Player[];
+
+        public bullets  : demo.Bullet[];
         
         public plane    : THREE.Object3D;
 
@@ -46,6 +65,8 @@ module demo
             this.setupPlane ();
 
             this.players = [];
+
+            this.bullets = [];
         }
 
         private setupElement(width:number, height:number): void {
@@ -97,7 +118,7 @@ module demo
                         
         }
 
-        private createPlayer(userid:string): demo.Player {
+        public createPlayer(userid:string): demo.Player {
 
             var player      = new Player();
 
@@ -110,6 +131,8 @@ module demo
             player.z        = 0;
 
             player.angle    = 0;
+
+            player.fire     = 0;
 
             var materials = [
                 
@@ -127,43 +150,49 @@ module demo
             return player;
         }
 
-        public updatePlayer(userid:string, x:number, y:number, z:number, angle:number) : void {
-        
-            for(var i = 0; i < this.players.length; i++) {
+        public updatePlayer(userid:string, x:number, y:number, z:number, angle:number, fire:number) : void {
+            
+            var player = this.getPlayer(userid);
+            
+            if(player) {
 
-                if(this.players[i].userid == userid) {
+                player.x = x;
+
+                player.y = y;
+
+                player.z = z;
+
+                player.angle = angle;
+
+                player.fire = fire;
                     
-                    this.players[i].x = x;
+                var cube = player.cube;
 
-                    this.players[i].y = y;
+                cube.position.x = player.x;
 
-                    this.players[i].z = z;
+                cube.position.y = player.y;
 
-                    this.players[i].angle = angle;
+                cube.position.z = player.z;
+
+                cube.rotation.y = (player.angle * (Math.PI / 180.0));
+
+                if(player.fire == 1) {
                     
-                    var cube = this.players[i].cube;
+                    this.createBullet(player.x, player.y, player.z, player.angle);
 
-                    cube.position.x = this.players[i].x;
-
-                    cube.position.y = this.players[i].y;
-
-                    cube.position.z = this.players[i].z;
-
-                    cube.rotation.y = (this.players[i].angle * (Math.PI / 180.0)); 
-                                   
+                    player.fire = 0;
                 }
             }
         }
 
         public lookAtPlayer(userid:string) : void {
 
-            for(var i = 0; i < this.players.length; i++) {
+            var player = this.getPlayer(userid);
 
-                if(this.players[i].userid == userid) {        
-
-                    this.camera.lookAt(this.players[i].cube.position) 
-                }
-            } 
+            if(player) {
+            
+                this.camera.lookAt(player.cube.position)
+            }
         }
 
         public getPlayer(userid:string) : demo.Player {
@@ -177,6 +206,63 @@ module demo
             }
 
             return null;
+        }
+
+        private createBullet(x: number, y:number, z:number, angle:number) : void {
+            
+            var bullet = new demo.Bullet();
+
+            bullet.x     = x;
+
+            bullet.y     = y;
+
+            bullet.z     = z;
+
+            bullet.angle = angle;
+
+            bullet.ticks = 0;
+            
+            bullet.cube = new THREE.Mesh( new THREE.CubeGeometry( 0.5, 0.5, 0.5, 1 , 1, 1 ), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+
+            bullet.cube.position.x = bullet.x;
+
+            bullet.cube.position.y = bullet.y;
+
+            bullet.cube.position.z = bullet.z;
+
+            this.scene.add(bullet.cube);
+
+            this.bullets.push(bullet);
+
+
+        }
+
+        public update() : void {
+
+            for(var i = 0; i < this.bullets.length; i++) {
+            
+                var x = Math.sin(this.bullets[i].angle * Math.PI / 180) * 0.5;
+
+                var y = Math.cos(this.bullets[i].angle * Math.PI / 180) * 0.5;
+                            
+                this.bullets[i].x     += x; 
+
+                this.bullets[i].z     += y;   
+                
+                this.bullets[i].ticks += 1;
+
+                this.bullets[i].cube.position.x = this.bullets[i].x;
+
+                this.bullets[i].cube.position.z = this.bullets[i].z;
+
+                if(this.bullets[i].ticks > 5000) {
+                
+                    this.scene.remove(this.bullets[i].cube);
+
+                    this.bullets = this.bullets.splice(i, 1);
+                }
+                             
+            }
         }
 
         public render(): void {

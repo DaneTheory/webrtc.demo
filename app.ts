@@ -33,9 +33,9 @@ export module static.webrtc {
 //----------------------------------------------------------
 // demo code
 //----------------------------------------------------------
-export module static.pantha {
+export module static.demo {
 
-    attribute('static.pantha.client', {urls: ['/static/demo/demo.js']})
+    attribute('static.demo.client', {urls: ['/static/demo/demo.js']})
     export function client(context: ICompilerContext) {
         
         context.demo_compiler.compile('./static/demo/index.ts', (result) => {
