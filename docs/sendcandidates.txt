@@ -1,0 +1,17 @@
+﻿        //this.connection.onicecandidate = (e) => {
+
+        //    if (e.candidate == null) { return }
+
+        //    console.log("this.connection.onicecandidate")
+
+        //    this.socket.emit("candidate", {
+                
+        //        to        : username,
+
+        //        from      : this.username,
+
+        //        candidate : JSON.stringify(e.candidate)
+        //    });
+
+        //    this.connection.onicecandidate = null;
+        //};

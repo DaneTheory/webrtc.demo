@@ -1,0 +1,16 @@
+﻿function getusers(callback) {
+
+    var clients = io.sockets.clients();
+
+    async.map(clients, function (client, callback) {
+
+        client.get('user', function (err, userdata) {
+
+            callback(null, userdata);
+        })
+
+    }, function (err, users) {
+
+        callback(users)
+    })
+}
