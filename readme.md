@@ -1,15 +1,11 @@
-﻿## webrtc + threejs demo thing
-
-### instructions
-
-download the master repository (link on the right somewhere)
+﻿webrtc + threejs demo
 
 extract files
 
-run "npm install" in the project root
+	npm install
 
-run "node app"
+	node app
 
-visit http://localhost:5000 
+visit http://localhost:5000
 
-enjoy.
+enjoy

@@ -1,101 +1,43 @@
-// ---------------------------------------------------
-//
-// modules
-//
-// ---------------------------------------------------
-
-var http = require('http')
+﻿//-------------------------------------------------------
+// appex configuration
+//-------------------------------------------------------
 
 var appex = require('appex')
 
-var util = require('./util.js')
+var app     = appex({
 
-var socket = {
+    program: './app.ts', 
 
-    io: require('socket.io')
-};
+    devmode: true, 
 
-var logging = false;
+    logging: true, 
 
-// ---------------------------------------------------
-// appex
-// ---------------------------------------------------
+    context: {
 
-var app = appex({ program: './app.ts',
-
-                  devmode: true, 
-
-                  logging: logging, 
-
-                  context: { 
-
-                        webrtc_compiler : new appex.compiler.Compiler(),
-
-                        demo_compiler   : new appex.compiler.Compiler() 
-                   }
-                });
-
-var server = http.createServer(app); 
-
-// ---------------------------------------------------
-// socket.io
-// ---------------------------------------------------
-
-var io = socket.io.listen(server, { log: logging });
-
-io.sockets.on('connection', function (socket) { 
-    
-    socket.emit('identity')
-
-    socket.on('identity', function(data) {
-
-        socket.set('userid', data.userid)
-
-        util.userids(io, function(userids) {
-
-            io.sockets.emit('sync', userids)
-        })
-    })
-
-    socket.on('candidate', function(data) {
-
-        util.get_socket(io, data.to, function(other) {
-            
-            other.emit('candidate', data)
-        })
-    });
-
-    socket.on('offer', function (data) {
-
-        util.get_socket(io, data.to, function(other) {
-            
-            other.emit('offer', data)
-        })
-    })
-
-    socket.on('answer', function (data) {
-
-        util.get_socket(io, data.to, function(other) {
-
-            if(other) {
-
-                other.emit('answer', data)
-            }
-        })
-    })
+        compiler : new appex.compiler.Compiler()
+    }
 })
 
-setInterval(function() {
+//-------------------------------------------------------
+// http configuration
+//-------------------------------------------------------
 
-    util.userids(io, function(userids) {
+var web = require('http').createServer(function(request, response){
 
-        io.sockets.emit('sync', userids)
-    })
+    app(request, response)
 
-}, 2000);
+}).listen(process.env.port || 5000)
 
-// ---------------------------------------------------
-// listen
-// ---------------------------------------------------
+//-------------------------------------------------------
+// socket.io configuration
+//-------------------------------------------------------
 
-server.listen(process.env.port || 5000)
+var io = require('socket.io').listen(web, {log : false})
+
+//-------------------------------------------------------
+// neptune configuration
+//-------------------------------------------------------
+
+var neptune = require('neptune')
+
+var server = new neptune.Server(io, new neptune.ConsoleLogger())

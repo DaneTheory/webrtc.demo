@@ -1,8 +1,0 @@
-﻿io.set('store', new RedisStore({
-
-    redisPub    : redis.createClient(6379, '192.168.1.8'),
-
-    redisSub    : redis.createClient(6379, '192.168.1.8'),
-
-    redisClient : redis.createClient(6379, '192.168.1.8')
-}));

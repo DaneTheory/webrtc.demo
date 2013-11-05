@@ -1,272 +1,283 @@
-﻿<html>
+﻿@layout 'layout.html'
 
-    <head>
+@section scripts {
+    
+    <script type='text/javascript' src="/socket.io/socket.io.js"></script>
+   
+    <script type="text/javascript" src="/static/scripts/neptune/neptune.js"></script>
 
-        <script type="text/javascript" src="/static/jquery/jquery.js"></script>
-        <script type="text/javascript" src="/static/threejs/three.min.js"></script>
-        <script type="text/javascript" src="/socket.io/socket.io.js"></script>
-        <script type="text/javascript" src="/static/webrtc/shim/adapter.js"></script>
-        <script type="text/javascript" src="/static/webrtc/client.js"></script>
-        <script type="text/javascript" src="/static/demo/demo.js"></script>
-        <script type="text/javascript">
+    <script type='text/javascript' src="/static/scripts/jquery/jquery.js"></script>
 
-            var app        = null;
+    <script type="text/javascript" src="/static/scripts/threejs/three.js"></script>
 
-            var player     = null;
+    <script type="text/javascript" src="/static/scripts/demo/demo.js"></script>
+    
+    <script type="text/javascript">
 
-            var socket     = null;
+        //-------------------------------------------------------
+        // globals
+        //-------------------------------------------------------
 
-            var logger     = null;
+        var client   = null // the neptune client
 
-            var signaller  = null;
+        var app      = null // the graphics app
 
-            var client     = null;
+        var player   = null // the player reference
 
-            function connect(userid) {
+        var input    = {    // player input
+        
+            left   : false,
 
-                client.connect(userid);
-            }
+            right  : false,
 
-            //----------------------------
-            // login proc
-            //----------------------------            
-            function login() {
+            up     : false,
 
-                setup_elements();
+            down   : false,
 
-                setup_graphics();
+            fire   : false
 
-                setup_network();
+        }
 
-                setup_player();
-            }
+        //-------------------------------------------------------
+        // setup: networking
+        //-------------------------------------------------------
 
-            //----------------------------
-            // swap out after login
-            //----------------------------
-            function setup_elements() {
+        var setup_network = function () {
 
-                $('#container-login').hide();
+            client = new neptune.Client(io.connect('/'), new neptune.NullLogger() )
 
-                $('#container-demo').show();
-            }
+            client.on('call', function(info, accept) {
+            
+                accept(true)
+            })
 
-            //----------------------------
-            // initialize the network
-            //----------------------------
-            function setup_network() {
+            client.on('connect', function() {
+                
+                player = app.createPlayer(client.clientid)
 
-                socket    = io.connect();
+                client.join('@(context.path)', function() {
+                
+                    client.roomstate('@(context.path)', function(state) {
+                
+                        for(var i = 0; i < state.clientids.length; i++) {
+                        
+                            if(client.clientid != state.clientids[i]) {
 
-                signaller = new webrtc.SocketIOSignaller(socket);
-
-                logger    = new webrtc.NullLogger();
-
-                client    = new webrtc.Client($('#userid').val(), signaller, logger);
-
-                client.onServerSync = function(userids) {
-
-                    //-------------------------------
-                    // pair up incoming connections
-                    //-------------------------------
-                    for(var i = 0; i < userids.length; i++) {
-
-                        if(userids[i] != client.userid) {
-
-                            var peer = client.getPeer(userids[i])
-
-                            if(!peer) {
-
-                                client.connect(userids[i]);
+                                client.call(state.clientids[i], null)
                             }
                         }
+                    })                
+                })
+            })
+
+            client.on('channel', function(channel) {
+
+                app.createPlayer(channel.clientid)
+
+                channel.on('message', function(message) {
+
+                    var player = JSON.parse(message)
+
+                    app.updatePlayer(channel.clientid, player.x, player.y, player.z, player.angle)
+                            
+                    if(player.fire) {
+
+                        app.createBullet(player.x, player.y, player.z, player.angle)
+                    }
+                })
+            })
+
+            //-------------------------------------------------------
+            // broadcast player data
+            //-------------------------------------------------------
+
+            setInterval(function() {
+            
+                for(var n in client.channels) {
+
+                    if(client.channels[n].connected) {
+
+                        var message = JSON.stringify({
+
+                            x        : player.x,
+
+                            y        : player.y,
+
+                            z        : player.z,
+
+                            angle    : player.angle,
+
+                            fire     : input.fire
+                        })
+
+                        client.channels[n].send(message)                 
                     }
                 }
+            
+            }, 10)
 
-                //-------------------------------
-                // on connect, create player entity
-                //-------------------------------
-                client.onConnect = function(peer) {
-                    
-                    var player = app.getPlayer(peer.userid);
+            //-------------------------------------------------------
+            // check for disconnects (rough)
+            //-------------------------------------------------------
 
-                    if(!player) {
+            setInterval(function() {
 
-                        app.createPlayer(peer.userid);
-                    }
-                }
-
-                //-------------------------------
-                // on message, update state.
-                //-------------------------------
-                client.onMessage = function(peer, message) {
-
-                    var update = JSON.parse(message.data);
-
-                    if(update.type == 'updatePlayer') {
-                        
-                        app.updatePlayer(peer.userid, update.x, update.y, update.z, update.angle);
-                    }
-
-                    if(update.type == 'createBullet') {
-
-                        app.createBullet(update.x, update.y, update.z, update.angle);
-                    }
-                }
-            }
-
-            //----------------------------
-            // sets up the player
-            //----------------------------
-            function setup_player() {
-
-                player = app.createPlayer(client.userid);
-
-                update_player_data();
-
-                setInterval(function() {
-
-                    update_player_data();
-
-                }, 1000);
-            }
-
-            //----------------------------
-            // sets up the graphics
-            //----------------------------
-            function setup_graphics() {
-
-                app = new demo.App( document.getElementById('app'), 800, 600 );
+                if(player) {
                 
-                var render = function() {
+                    client.roomstate('@(context.path)', function(state) {
+                    
+                        for(var i = 0; i < app.players.length; i++) {
 
-                    requestAnimationFrame( render );
+                            app.players[i].active = false
+                        }
 
-                    app.update();
+                        for(var i = 0; i < state.clientids.length; i++) {
 
-                    app.render();
+                            for(var j = 0; j < app.players.length; j++) {
+                            
+                                if(state.clientids[i] == app.players[j].clientid) {
+                                
+                                    app.players[j].active = true
+                                }
+                            }
+                        }
+                    
+                        for(var i = 0; i < app.players.length; i++) {
+
+                            if(!app.players[i].active) {
+
+                                for(var j = 0; j < client.channels.length; j++) {
+                                
+                                    if(client.channels[j].clientid == app.players[i].clientid) {
+                                        
+                                        client.channels[j].close()
+
+                                        client.channels.splice(i, 1)
+                                    }
+                                }
+                                
+                                app.removePlayer(app.players[i].clientid)
+                            }
+                        }
+                    })
                 }
 
-                render();
-            }
+            }, 1000)
+        }
 
-            //----------------------------
-            // updates player and broadcasts
-            //----------------------------
-            function update_player_data() {
+        //-------------------------------------------------------
+        // setup: app
+        //-------------------------------------------------------
 
-                client.broadcast(JSON.stringify({
-                    type     : 'updatePlayer',
-                    x        : player.x,
-                    y        : player.y,
-                    z        : player.z,
-                    angle    : player.angle
-                }));
+        var setup_graphics = function() {
+            
+            app = new demo.App(document.getElementById('jumbotron'), $('#jumbotron').width(), 480)
+            
+            var render = function() {
 
-                app.updatePlayer(player.userid, player.x, player.y, player.z, player.angle);
-                    
-                app.lookAtPlayer(player.userid);   
+                requestAnimationFrame( render )
 
-                if(player.fire == 1) {
-
-                    client.broadcast(JSON.stringify({
-                        type     : 'createBullet',
-                        x        : player.x,
-                        y        : player.y,
-                        z        : player.z,
-                        angle    : player.angle
-                    }));
-
-                    app.createBullet(player.x, player.y, player.z, player.angle);
-                    
-                    player.fire = 0;
-                }
-            }
-
-
-            //-----------------------------------
-            // rough as guts keyboard handler.
-            //-----------------------------------
-            document.onkeydown = checkKey;
-
-            function checkKey(e) {
+                //-------------------------------------------------------
+                // player update 
+                //-------------------------------------------------------
 
                 if(player) {
 
-                    e = e || window.event;
+                    if(input.left)  { player.angle += 4 }
 
-                    switch(e.keyCode) {
+                    if(input.right) { player.angle -= 4 }
 
-                        case 37: 
-                            
-                            player.angle += 5;
-                            
-                            break; // left
+                    if(input.up) {
 
-                        case 39: 
-                            
-                            player.angle -= 5;
-                            
-                            break; // right
+                        var x = Math.sin(player.angle * 3.14 / 180)
 
-                        case 38: 
+                        var y = Math.cos(player.angle * 3.14 / 180)
 
-                            var x = Math.sin(player.angle * 3.14 / 180);
+                        player.x += x
 
-                            var y = Math.cos(player.angle * 3.14 / 180);
-                            
-                            player.x += x; 
+                        player.z += y
+                    }
+                    if(input.down) {
 
-                            player.z += y;                             
-                            
-                            break; // up
+                        var x = Math.sin(player.angle * 3.14 / 180)
 
-                        case 40: 
+                        var y = Math.cos(player.angle * 3.14 / 180)
 
-                            var x = Math.sin(player.angle * 3.14 / 180);
+                        player.x -= x
 
-                            var y = Math.cos(player.angle * 3.14 / 180);
-                            
-                            player.x -= x; 
-
-                            player.z -= y;                             
-                            
-                            break; // up
-
-                        case 83:
-
-                            player.fire = 1;
-
-                            break;
+                        player.z -= y
                     }
 
-                    update_player_data();
+                    if(input.fire) {
+
+                        app.createBullet(player.x, player.y, player.z, player.angle)
+                    }
+
+                    app.updatePlayer(player.clientid, player.x, player.y, player.z, player.angle)
+
+                    app.lookAtPlayer(player.clientid)
+                }
+
+                app.update();
+
+                app.render();
+            }
+
+            render();             
+        }
+
+        //-------------------------------------------------------
+        // setup: keyboard
+        //-------------------------------------------------------
+
+        var setup_keyboard = function() {
+
+            document.onkeydown = function(e) {
+
+                switch(e.keyCode) {
+
+                    case 37: input.left  = true; break;
+
+                    case 39: input.right = true; break;
+
+                    case 38: input.up    = true; break;
+
+                    case 40: input.down  = true; break;
+
+                    case 83: input.fire  = true; break;
                 }
             }
-        </script>
 
-    </head>
+            document.onkeyup = function(e) {
 
-    <body>
+                switch(e.keyCode) {
 
-        <h3>webrtc test app - sinclair 2013</h3>
+                    case 37: input.left  = false; break;
 
-        <div id="container-login">
+                    case 39: input.right = false; break;
 
-            <input type="text" id="userid" />
+                    case 38: input.up    = false; break;
 
-            <input type="button" id="login" value="username" onclick="login()" />
+                    case 40: input.down  = false; break;
 
-        </div>
+                    case 83: input.fire  = false; break;
+                }
+            }
+        }
 
-        <div id="container-demo" style="display:none">
+        $(document).ready(function(){ 
+        
+            setup_graphics()
 
-            <div id="app"></div>
+            setup_network()
 
-            <p>use arrow keys to move, (s) to shoot.</p>
+            setup_keyboard()
+        })
 
-        </div>
+    </script>
+}
 
-    </body>
+@section content {
 
-</html>
+    <div id="jumbotron" />
+}

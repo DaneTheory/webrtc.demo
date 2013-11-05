@@ -1,16 +1,11 @@
 {
-  "name": "webrtc-demo",
+  "name": "webrtc.demo",
   "version": "0.0.1",
-  "description": "WebRTC + THREEJS",
+  "description": "webrtc + threejs demo",
   "main": "app.js",
-  "directories": {
-    "doc": "docs"
-  },
   "dependencies": {
-    "appex": "~0.6.7",
-    "async": "~0.2.9",
-    "socket.io": "~0.9.16",
-    "nodemon": "~0.7.10"
+    "appex": "~0.6.8",
+    "socket.io": "~0.9.16"
   },
   "devDependencies": {},
   "scripts": {
@@ -21,8 +16,9 @@
     "url": "https://github.com/sinclairzx81/webrtc.demo.git"
   },
   "keywords": [
-    "WebRTC",
-    "THREEJS"
+    "webrtc",
+    "webgl",
+    "threejs"
   ],
   "author": "sinclair",
   "license": "BSD-2-Clause",
