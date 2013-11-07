@@ -18,11 +18,15 @@
         // globals
         //-------------------------------------------------------
 
-        var client   = null // the neptune client
+        var logger    = null // the network logger
 
-        var app      = null // the graphics app
+        var signaller = null // the signaller to use
 
-        var player   = null // the player reference
+        var client    = null // the neptune client
+
+        var app       = null // the graphics app
+
+        var player    = null // the player reference
 
         var input    = {    // player input
         
@@ -44,7 +48,11 @@
 
         var setup_network = function () {
 
-            client = new neptune.Client(io.connect('/'), new neptune.NullLogger() )
+            logger    = new neptune.NullLogger()
+
+            signaller = new neptune.SocketIOSignaller(io.connect('/'), logger)
+
+            client    = new neptune.Client(signaller, new neptune.NullLogger(), logger )
 
             client.on('call', function(info, accept) {
             
@@ -57,34 +65,41 @@
 
                 client.join('@(context.path)', function() {
                 
-                    client.roomstate('@(context.path)', function(state) {
+                    client.clients('@(context.path)', function(clients) {
                 
-                        for(var i = 0; i < state.clientids.length; i++) {
+                        for(var i = 0; i < clients.clientids.length; i++) {
                         
-                            if(client.clientid != state.clientids[i]) {
+                            if(client.clientid != clients.clientids[i]) {
 
-                                client.call(state.clientids[i], null)
+                                client.datacall(clients.clientids[i], 1)
                             }
                         }
                     })                
                 })
             })
 
-            client.on('channel', function(channel) {
+            client.on('connection', function(connection) {
 
-                app.createPlayer(channel.clientid)
+                if(connection.type == 'data') {
+                
+                    app.createPlayer(connection.clientid)
 
-                channel.on('message', function(message) {
+                    connection.channels[0].on('update', function(player) {
 
-                    var player = JSON.parse(message)
+                        app.updatePlayer(connection.clientid, player.x, 
+                                                              player.y, 
+                                                              player.z, 
+                                                              player.angle)
 
-                    app.updatePlayer(channel.clientid, player.x, player.y, player.z, player.angle)
-                            
-                    if(player.fire) {
+                        if(player.fire) {
 
-                        app.createBullet(player.x, player.y, player.z, player.angle)
-                    }
-                })
+                            app.createBullet(player.x, 
+                                             player.y, 
+                                             player.z, 
+                                             player.angle)
+                        }
+                    })
+                }
             })
 
             //-------------------------------------------------------
@@ -92,28 +107,17 @@
             //-------------------------------------------------------
 
             setInterval(function() {
-            
-                for(var n in client.channels) {
-
-                    if(client.channels[n].connected) {
-
-                        var message = JSON.stringify({
-
+                for(var i = 0; i < client.connections.length; i++) {
+                    if(client.connections[i].type == 'data') {
+                        client.connections[i].channels[0].emit('update', {
                             x        : player.x,
-
                             y        : player.y,
-
                             z        : player.z,
-
                             angle    : player.angle,
-
                             fire     : input.fire
                         })
-
-                        client.channels[n].send(message)                 
                     }
                 }
-            
             }, 33)
 
             //-------------------------------------------------------
@@ -124,35 +128,33 @@
 
                 if(player) {
                 
-                    client.roomstate('@(context.path)', function(state) {
+                    client.clients('@(context.path)', function(clients) {
                     
                         for(var i = 0; i < app.players.length; i++) {
 
                             app.players[i].active = false
                         }
 
-                        for(var i = 0; i < state.clientids.length; i++) {
+                        for(var i = 0; i < clients.clientids.length; i++) {
 
                             for(var j = 0; j < app.players.length; j++) {
                             
-                                if(state.clientids[i] == app.players[j].clientid) {
+                                if(clients.clientids[i] == app.players[j].clientid) {
                                 
                                     app.players[j].active = true
                                 }
                             }
                         }
-                    
+                        
                         for(var i = 0; i < app.players.length; i++) {
 
                             if(!app.players[i].active) {
 
-                                for(var j = 0; j < client.channels.length; j++) {
+                                for(var j = 0; j < client.connections.length; j++) {
                                 
-                                    if(client.channels[j].clientid == app.players[i].clientid) {
-                                        
-                                        client.channels[j].close()
+                                    if(client.connections[j].clientid == app.players[i].clientid) {
 
-                                        client.channels.splice(i, 1)
+                                        client.connections.splice(i, 1)
                                     }
                                 }
                                 
