@@ -80,6 +80,24 @@
 
             client.on('connection', function(connection) {
 
+                if(connection.type == 'media') {
+                    
+                    if(connection.direction == 'in') {
+
+                        var _player = app.getPlayer(connection.clientid) 
+                    
+                        if(_player) {
+
+                            _player.bindstream(connection.mediastream)                    
+                        }                    
+                    }
+                    if(connection.direction == 'out') {
+
+                        player.bindstream(connection.mediastream)              
+                    }
+                }
+
+
                 if(connection.type == 'data') {
                 
                     app.createPlayer(connection.clientid)
@@ -129,7 +147,7 @@
                 if(player) {
                 
                     client.clients('@(context.path)', function(clients) {
-                    
+
                         for(var i = 0; i < app.players.length; i++) {
 
                             app.players[i].active = false
@@ -276,10 +294,46 @@
             setup_keyboard()
         })
 
+         function disableCamera() {
+            
+            neptune.mediastream(function(mediastream) {
+
+                client.clients('@(context.path)', function(clients) {
+                
+                    for(var n in clients.clientids) {
+                        
+                        if(clients.clientids[n] != player.clientid) {
+                        
+                            client.mediacall(clients.clientids[n], mediastream)
+                        }
+                    }
+                    
+                })
+            })
+        }      
+
+        function enableCamera() {
+        
+            neptune.mediastream(function(mediastream) {
+
+                client.clients('@(context.path)', function(clients) {
+                
+                    for(var n in clients.clientids) {
+                        
+                        if(clients.clientids[n] != player.clientid) {
+                        
+                            client.mediacall(clients.clientids[n], mediastream)
+                        }
+                    }
+                    
+                })
+            })
+        }
+
     </script>
 }
 
 @section content {
 
-    <div id="jumbotron" />
+    <div id="jumbotron" />  
 }

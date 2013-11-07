@@ -2,16 +2,76 @@
 
 module demo {
 
-    export class Player {
-        
-        public clientid : string;
+    export class Player extends THREE.Object3D {
+
         public x        : number;
         public y        : number;
         public z        : number;
         public angle    : number;
         public fire     : number;
-        public scale    : number;
         public cube     : THREE.Object3D;
+        public banner   : THREE.Object3D;
+
+        public video       : HTMLVideoElement
+        public stream      : any
+
+        constructor(public clientid : string) {
+            super()
+            this.x        = 0
+            this.y        = 1.5
+            this.z        = 0
+            this.angle    = 0
+            this.fire     = 0
+
+            this.initialize()
+        }
+
+        public initialize() : void {
+
+            //----------------------------
+            // cube initialization
+            //----------------------------
+            var cube_materials = [
+                new THREE.MeshBasicMaterial( { color: 0x000000, side: THREE.DoubleSide } ),
+                new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true, transparent: true, opacity: 0.5, side: THREE.DoubleSide } )
+            ]
+            this.cube = THREE.SceneUtils.createMultiMaterialObject( new THREE.CubeGeometry( 3, 3, 3, 1, 1, 1 ), cube_materials )
+            this.add(this.cube)
+        }
+
+        public bindstream(stream:any) : void {
+            if(this.banner) {
+                this.remove(this.banner)
+            }
+            this.stream         = stream
+            this.video          = document.createElement('video')
+            this.video.width    = 320;
+            this.video.height   = 240;
+            this.video.autoplay = true;
+            this.video.src      = URL.createObjectURL(this.stream)
+            var texture         = new THREE.Texture( <any>this.video )
+            var banner_material = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, map : texture, side: THREE.DoubleSide })
+            this.banner  = new THREE.Mesh(new THREE.PlaneGeometry(8, 6), banner_material)
+            this.banner.position.y = 5
+            this.banner.scale.y    = 0.0
+            this.banner.scale.x    =  0.0
+            this.add(this.banner)   
+            var handle = setInterval(()=> {
+                this.banner.scale.y    += 0.05
+                this.banner.scale.x    += 0.05
+
+                if(this.banner.scale.x > 1.0) {
+                    clearInterval(handle)
+                }
+            }, 1)  
+            setInterval(()=>{
+
+                if( this.video.readyState === this.video.HAVE_ENOUGH_DATA ) {
+
+                    texture.needsUpdate = true;
+                }
+            }, 33)                
+        }
     }
 
     export class Bullet {
@@ -81,23 +141,8 @@ module demo {
         }
 
         public createPlayer(clientid:string): demo.Player {
-            
-            var materials = [
-                new THREE.MeshBasicMaterial( { color: 0x000000, side: THREE.DoubleSide } ),
-                new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true, transparent: true, opacity: 0.5, side: THREE.DoubleSide } )
-            ];
-
-            var player      = new Player();
-            player.clientid   = clientid;
-            player.x        = 0;
-            player.y        = 1.5;
-            player.z        = 0;
-            player.angle    = 0;
-            player.fire     = 0;
-            player.scale    = 1;
-            player.cube = THREE.SceneUtils.createMultiMaterialObject( new THREE.CubeGeometry( 3, 3, 3, 1, 1, 1 ), materials );
-
-            this.scene.add(player.cube);
+            var player = new demo.Player(clientid);
+            this.scene.add(player);
             this.players.push(player);
             return player;
         }
@@ -107,7 +152,7 @@ module demo {
                 if(this.players[i].clientid == clientid) {
                     var player = this.players[i]
                     this.players.splice(i, 1)
-                    this.scene.remove(player.cube);
+                    this.scene.remove(player);
                 }
             }
         }
@@ -120,22 +165,18 @@ module demo {
                 player.y     = y;
                 player.z     = z;
                 player.angle = angle;
-                var cube = player.cube;
-                cube.position.x = player.x;
-                cube.position.y = player.y;
-                cube.position.z = player.z;
-                cube.rotation.y = (player.angle * (Math.PI / 180.0));
-                cube.scale.x    = player.scale;
-                cube.scale.y    = player.scale;
-                cube.scale.z    = player.scale;
-                cube.updateMatrix();
+                player.position.x = player.x;
+                player.position.y = player.y;
+                player.position.z = player.z;
+                player.rotation.y = (player.angle * (Math.PI / 180.0));
+                player.updateMatrix();
             }
         }
 
         public lookAtPlayer(clientid:string) : void {
             var player = this.getPlayer(clientid);
             if(player) {
-                this.camera.lookAt(player.cube.position)
+                this.camera.lookAt(player.position)
             }
         }
 

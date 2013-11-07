@@ -779,8 +779,6 @@ var neptune;
             this.signaller.on('join', function (input) {
                 _this.logger.log('client: on join');
 
-                console.log(_this.waiters[input.tid]);
-
                 if (_this.waiters[input.tid]) {
                     _this.waiters[input.tid](input);
 
