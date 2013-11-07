@@ -316,17 +316,19 @@
         
             neptune.mediastream(function(mediastream) {
 
-                client.clients('@(context.path)', function(clients) {
+                if(mediastream) {
+
+                    client.clients('@(context.path)', function(clients) {
                 
-                    for(var n in clients.clientids) {
+                        for(var n in clients.clientids) {
                         
-                        if(clients.clientids[n] != player.clientid) {
+                            if(clients.clientids[n] != player.clientid) {
                         
-                            client.mediacall(clients.clientids[n], mediastream)
+                                client.mediacall(clients.clientids[n], mediastream)
+                            }
                         }
-                    }
-                    
-                })
+                    })
+                }
             })
         }
 
